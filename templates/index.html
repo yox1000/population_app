@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Population Pyramid Input & Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 900px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 1em;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: center;
+    }
+    input[type="number"] {
+      width: 60px;
+      text-align: right;
+    }
+    .male {
+      background-color: #cce5ff;
+    }
+    .female {
+      background-color: #f8d7da;
+    }
+    select, button {
+      font-size: 1rem;
+      padding: 6px 12px;
+      margin-top: 10px;
+    }
+    #chart-container {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Population Pyramid Input</h1>
+
+<label for="preset-select">Choose a population preset:</label>
+<select id="preset-select">
+  <option value="">-- Select Preset --</option>
+  <option value="afghanistan">Afghanistan (Expansive)</option>
+  <option value="ecuador">Ecuador (Stationary)</option>
+  <option value="italy">Italy (Constrictive)</option>
+  <option value="qatar">Qatar (Unbalanced)</option>
+</select>
+
+<form id="population-form" onsubmit="return false;">
+  <table>
+    <thead>
+      <tr>
+        <th>Age Group</th>
+        <th class="male">Male %</th>
+        <th class="female">Female %</th>
+      </tr>
+    </thead>
+    <tbody id="age-inputs"></tbody>
+  </table>
+
+  <button type="button" id="calculate-btn">Calculate Population Pyramid</button>
+</form>
+
+<div id="chart-container">
+  <canvas id="populationChart" height="400"></canvas>
+</div>
+
+<script>
+  const ageBrackets = [
+    "0-9", "10-19", "20-29", "30-39", "40-49",
+    "50-59", "60-69", "70-79", "80+"
+  ];
+
+  const presets = {
+    afghanistan: {
+        male:   [17.2, 12.9, 7.8, 4.8, 3.4, 2.2, 1.6, 0.7, 0.2],
+        female: [16.3, 12.0, 8.4, 4.7, 3.6, 2.2, 1.2, 0.5, 0.1]
+    },
+    ecuador: {
+      male:   [9.9, 9.8, 8.6, 7.2, 5.7, 4.4, 3.5, 1.6, 0.7],
+      female: [9.5, 9.6, 7.8, 6.8, 5.0, 3.1, 2.0, 1.3, 0.2]
+    },
+    italy: {
+      male:   [4.3, 5.2, 5.5, 6.0, 7.7, 8.3, 6.0, 4.9, 2.7],
+      female: [4.0, 4.8, 5.8, 6.6, 7.9, 7.9, 5.1, 4.1, 2.1]
+    },
+    qatar: {
+      male:   [5.5, 3.9, 22.0, 12.9, 7.2, 2.8, 1.5, 0.3, 0.1],
+      female: [5.3, 2.4, 7.4, 8.2, 4.5, 1.8, 0.7, 0.1, 0.1]
+    }
+  };
+
+  // Create table rows dynamically
+  const tbody = document.getElementById('age-inputs');
+  ageBrackets.forEach((bracket, i) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${bracket}</td>
+      <td class="male"><input type="number" step="0.1" min="0" max="100" name="male_${i}" /></td>
+      <td class="female"><input type="number" step="0.1" min="0" max="100" name="female_${i}" /></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  // Preset select change fills inputs
+  document.getElementById('preset-select').addEventListener('change', function() {
+    const selected = this.value;
+    if (!selected || !(selected in presets)) {
+      ageBrackets.forEach((_, i) => {
+        document.querySelector(`input[name="male_${i}"]`).value = '';
+        document.querySelector(`input[name="female_${i}"]`).value = '';
+      });
+      return;
+    }
+    const preset = presets[selected];
+    ageBrackets.forEach((_, i) => {
+      document.querySelector(`input[name="male_${i}"]`).value = preset.male[i];
+      document.querySelector(`input[name="female_${i}"]`).value = preset.female[i];
+    });
+  });
+
+  let populationChart;
+
+  document.getElementById('calculate-btn').addEventListener('click', () => {
+    const maleData = [];
+    const femaleData = [];
+
+    ageBrackets.forEach((_, i) => {
+      let maleVal = parseFloat(document.querySelector(`input[name="male_${i}"]`).value);
+      let femaleVal = parseFloat(document.querySelector(`input[name="female_${i}"]`).value);
+
+      if (isNaN(maleVal) || maleVal < 0) maleVal = 0;
+      if (isNaN(femaleVal) || femaleVal < 0) femaleVal = 0;
+
+      maleData.push(-maleVal); // left
+      femaleData.push(femaleVal); // right
+    });
+
+    if (populationChart) {
+      populationChart.destroy();
+    }
+
+    const ctx = document.getElementById('populationChart').getContext('2d');
+
+    populationChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ageBrackets.slice().reverse(), // youngest at bottom
+        datasets: [
+          {
+            label: 'Male',
+            data: maleData.slice().reverse(),
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          },
+          {
+            label: 'Female',
+            data: femaleData.slice().reverse(),
+            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        scales: {
+          x: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: {
+              callback: val => Math.abs(val) + '%'
+            },
+            title: {
+              display: true,
+              text: 'Population %'
+            }
+          },
+          y: {
+            stacked: true,
+            reverse: true,
+            title: {
+              display: true,
+              text: 'Age Group'
+            },
+            grid: {
+              offset: false
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${Math.abs(ctx.parsed.x)}%`
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
