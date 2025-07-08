@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import matplotlib.pyplot as plt
 import io
 import base64
+import json
 
 app = Flask(__name__)
 
@@ -10,52 +11,40 @@ AGE_BRACKETS = [
     "50-59", "60-69", "70-79", "80-89", "90-99", "100+"
 ]
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
-    chart_url = None
-    error = None
-    males = []
-    females = []
+    return render_template("index.html", age_brackets=AGE_BRACKETS)
 
-    if request.method == "POST":
-        try:
-            males = [float(request.form[f"male_{i}"]) for i in range(len(AGE_BRACKETS))]
-            females = [float(request.form[f"female_{i}"]) for i in range(len(AGE_BRACKETS))]
+@app.route("/generate-chart", methods=["POST"])
+def generate_chart():
+    try:
+        data = request.json
+        males = [-float(x) for x in data.get("male", [0]*len(AGE_BRACKETS))]
+        females = [float(x) for x in data.get("female", [0]*len(AGE_BRACKETS))]
 
-            total_population = sum(males) + sum(females)
-            if abs(total_population - 100) > 0.01:
-                error = f"Total population percentages must add up to 100. Current total: {total_population:.2f}"
-            else:
-                # Convert male percentages to negative for left side bars
-                males_neg = [-v for v in males]
+        fig, ax = plt.subplots(figsize=(8, 6))
+        y_pos = list(range(len(AGE_BRACKETS)))
 
-                fig, ax = plt.subplots(figsize=(8, 6))
-                y_pos = range(len(AGE_BRACKETS))
+        ax.barh(y_pos, males, color='blue', label='Male')
+        ax.barh(y_pos, females, color='pink', label='Female')
 
-                ax.barh(y_pos, males_neg, color='blue', label='Male')
-                ax.barh(y_pos, females, color='pink', label='Female')
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(AGE_BRACKETS)
+        ax.set_xlabel('Population %')
+        ax.set_title('Population Pyramid')
+        ax.legend()
+        ax.grid(axis='x', linestyle='--', alpha=0.7)
+        plt.tight_layout()
 
-                ax.set_yticks(y_pos)
-                ax.set_yticklabels(AGE_BRACKETS)
-                ax.set_xlabel('Population Percentage')
-                ax.set_title('Population Pyramid')
-                ax.legend()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        chart_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close()
 
-                ax.grid(axis='x', linestyle='--', alpha=0.7)
-                plt.tight_layout()
+        return jsonify({"chart": chart_base64})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-                buf = io.BytesIO()
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                chart_url = base64.b64encode(buf.getvalue()).decode('utf-8')
-                plt.close()
-
-        except Exception as e:
-            error = f"Error processing form data: {e}"
-
-    return render_template("index.html", age_brackets=AGE_BRACKETS,
-                           chart_url=chart_url, error=error,
-                           males=males, females=females)
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)

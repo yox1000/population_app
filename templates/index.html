@@ -2,172 +2,237 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Population Pyramid Input & Chart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Population Pyramid Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
-      max-width: 900px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
     }
-    table {
-      border-collapse: collapse;
-      margin-top: 1em;
-      width: 100%;
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
+    h1, h2 {
       text-align: center;
     }
-    input[type="number"] {
-      width: 60px;
-      text-align: right;
+    .form-section, .projection-section {
+      margin-bottom: 30px;
     }
-    .male {
-      background-color: #cce5ff;
+    .presets button, .form-section button {
+      margin: 5px;
     }
-    .female {
-      background-color: #f8d7da;
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
     }
-    select, button {
-      font-size: 1rem;
-      padding: 6px 12px;
-      margin-top: 10px;
+    .stat-item {
+      text-align: center;
     }
-    #chart-container {
-      margin-top: 40px;
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2196F3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    .male-header {
+      background-color: #e3f2fd;
+    }
+    .female-header {
+      background-color: #fce4ec;
+    }
+    .chart-container {
+      margin: 30px 0;
     }
   </style>
 </head>
 <body>
+<div class="container">
+  <h1>Population Pyramid Generator</h1>
 
-<h1>Population Pyramid Input</h1>
+  <div class="presets">
+    <strong>Presets:</strong><br/>
+    <button onclick="loadPreset('afghanistan')">Afghanistan</button>
+    <button onclick="loadPreset('ecuador')">Ecuador</button>
+    <button onclick="loadPreset('italy')">Italy</button>
+    <button onclick="loadPreset('qatar')">Qatar</button>
+    <button onclick="clearData()">Clear</button>
+  </div>
 
-<label for="preset-select">Choose a population preset:</label>
-<select id="preset-select">
-  <option value="">-- Select Preset --</option>
-  <option value="afghanistan">Afghanistan (Expansive)</option>
-  <option value="ecuador">Ecuador (Stationary)</option>
-  <option value="italy">Italy (Constrictive)</option>
-  <option value="qatar">Qatar (Unbalanced)</option>
-</select>
+  <div>
+    <strong>2025 Population:</strong>
+    <span id="current-population">—</span>
+  </div>
 
-<form id="population-form" onsubmit="return false;">
-  <table>
-    <thead>
+  <form class="form-section" onsubmit="generateChart(event)">
+    <table>
+      <thead>
       <tr>
         <th>Age Group</th>
-        <th class="male">Male %</th>
-        <th class="female">Female %</th>
+        <th class="male-header">Male %</th>
+        <th class="female-header">Female %</th>
       </tr>
-    </thead>
-    <tbody id="age-inputs"></tbody>
-  </table>
+      </thead>
+      <tbody id="age-table"></tbody>
+    </table>
+    <button type="submit">Generate Population Pyramid</button>
+    <button type="button" onclick="calculateStats()">Calculate Stats</button>
+  </form>
 
-  <button type="button" id="calculate-btn">Calculate Population Pyramid</button>
-</form>
+  <div id="stats" class="stats" style="display:none;">
+    <div class="stat-item">
+      <div class="stat-value" id="total-pop">0</div>
+      <div>Total Population %</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="male-total">0</div>
+      <div>Male %</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="female-total">0</div>
+      <div>Female %</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="youth-ratio">0</div>
+      <div>Youth Ratio (0–19)</div>
+    </div>
+  </div>
 
-<div id="chart-container">
-  <canvas id="populationChart" height="400"></canvas>
+  <div class="chart-container">
+    <canvas id="populationChart" width="800" height="400"></canvas>
+  </div>
+
+  <h2>Population Projection (2025–2100)</h2>
+  <div class="projection-section">
+    <label>Birth Rate (%): <input type="number" id="birthRate" step="0.1" value="2.0"></label><br/><br/>
+    <label>Death Rate (%): <input type="number" id="deathRate" step="0.1" value="1.0"></label><br/><br/>
+    <label>Migration Rate (%): <input type="number" id="migrationRate" step="0.1" value="0.0"></label><br/><br/>
+    <button onclick="generateProjectionChart()">Generate Population Projection</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="projectionChart" width="800" height="400"></canvas>
+  </div>
 </div>
 
 <script>
-  const ageBrackets = [
-    "0-9", "10-19", "20-29", "30-39", "40-49",
-    "50-59", "60-69", "70-79", "80+"
-  ];
+  const ageBrackets = ["0-9", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99", "100+"];
+  let populationChart = null;
+  let projectionChart = null;
 
   const presets = {
     afghanistan: {
-        male:   [17.2, 12.9, 7.8, 4.8, 3.4, 2.2, 1.6, 0.7, 0.2],
-        female: [16.3, 12.0, 8.4, 4.7, 3.6, 2.2, 1.2, 0.5, 0.1]
+      population: 42270000,
+      male: [17.2, 12.9, 7.8, 4.8, 3.4, 2.2, 1.6, 0.7, 0.2, 0.1, 0.1],
+      female: [16.3, 12.0, 8.4, 4.7, 3.6, 2.2, 1.2, 0.5, 0.1, 0.1, 0.0]
     },
     ecuador: {
-      male:   [9.9, 9.8, 8.6, 7.2, 5.7, 4.4, 3.5, 1.6, 0.7],
-      female: [9.5, 9.6, 7.8, 6.8, 5.0, 3.1, 2.0, 1.3, 0.2]
+      population: 18100000,
+      male: [9.9, 9.8, 8.6, 7.2, 5.7, 4.4, 3.5, 1.6, 0.7, 0.3, 0.1],
+      female: [9.5, 9.6, 7.8, 6.8, 5.0, 3.1, 2.0, 1.3, 0.2, 0.1, 0.0]
     },
     italy: {
-      male:   [4.3, 5.2, 5.5, 6.0, 7.7, 8.3, 6.0, 4.9, 2.7],
-      female: [4.0, 4.8, 5.8, 6.6, 7.9, 7.9, 5.1, 4.1, 2.1]
+      population: 58850000,
+      male: [4.3, 5.2, 5.5, 6.0, 7.7, 8.3, 6.0, 4.9, 2.7, 1.2, 0.2],
+      female: [4.0, 4.8, 5.8, 6.6, 7.9, 7.9, 5.1, 4.1, 2.1, 1.0, 0.1]
     },
     qatar: {
-      male:   [5.5, 3.9, 22.0, 12.9, 7.2, 2.8, 1.5, 0.3, 0.1],
-      female: [5.3, 2.4, 7.4, 8.2, 4.5, 1.8, 0.7, 0.1, 0.1]
+      population: 2820000,
+      male: [5.5, 3.9, 22.0, 12.9, 7.2, 2.8, 1.5, 0.3, 0.1, 0.0, 0.0],
+      female: [5.3, 2.4, 7.4, 8.2, 4.5, 1.8, 0.7, 0.1, 0.1, 0.0, 0.0]
     }
   };
 
-  // Create table rows dynamically
-  const tbody = document.getElementById('age-inputs');
-  ageBrackets.forEach((bracket, i) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${bracket}</td>
-      <td class="male"><input type="number" step="0.1" min="0" max="100" name="male_${i}" /></td>
-      <td class="female"><input type="number" step="0.1" min="0" max="100" name="female_${i}" /></td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  // Preset select change fills inputs
-  document.getElementById('preset-select').addEventListener('change', function() {
-    const selected = this.value;
-    if (!selected || !(selected in presets)) {
-      ageBrackets.forEach((_, i) => {
-        document.querySelector(`input[name="male_${i}"]`).value = '';
-        document.querySelector(`input[name="female_${i}"]`).value = '';
-      });
-      return;
-    }
-    const preset = presets[selected];
-    ageBrackets.forEach((_, i) => {
-      document.querySelector(`input[name="male_${i}"]`).value = preset.male[i];
-      document.querySelector(`input[name="female_${i}"]`).value = preset.female[i];
+  function initializeTable() {
+    const tbody = document.getElementById('age-table');
+    tbody.innerHTML = '';
+    ageBrackets.forEach((bracket, i) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>${bracket}</strong></td>
+        <td><input type="number" id="male_${i}" step="0.1" min="0" max="100"></td>
+        <td><input type="number" id="female_${i}" step="0.1" min="0" max="100"></td>
+      `;
+      tbody.appendChild(row);
     });
-  });
+  }
 
-  let populationChart;
+  function loadPreset(name) {
+    const preset = presets[name];
+    document.getElementById('current-population').textContent = preset.population.toLocaleString();
+    document.getElementById('current-population').dataset.value = preset.population;
+    ageBrackets.forEach((_, i) => {
+      document.getElementById(`male_${i}`).value = preset.male[i];
+      document.getElementById(`female_${i}`).value = preset.female[i];
+    });
+    calculateStats();
+    generateChart(new Event("submit"));
+  }
 
-  document.getElementById('calculate-btn').addEventListener('click', () => {
+  function clearData() {
+    ageBrackets.forEach((_, i) => {
+      document.getElementById(`male_${i}`).value = '';
+      document.getElementById(`female_${i}`).value = '';
+    });
+    document.getElementById('current-population').textContent = '—';
+    document.getElementById('current-population').dataset.value = '';
+    if (populationChart) populationChart.destroy();
+    if (projectionChart) projectionChart.destroy();
+    document.getElementById('stats').style.display = 'none';
+  }
+
+  function generateChart(e) {
+    e.preventDefault();
+
+    // Collect and reverse data
     const maleData = [];
     const femaleData = [];
+    const labels = [];
 
-    ageBrackets.forEach((_, i) => {
-      let maleVal = parseFloat(document.querySelector(`input[name="male_${i}"]`).value);
-      let femaleVal = parseFloat(document.querySelector(`input[name="female_${i}"]`).value);
-
-      if (isNaN(maleVal) || maleVal < 0) maleVal = 0;
-      if (isNaN(femaleVal) || femaleVal < 0) femaleVal = 0;
-
-      maleData.push(-maleVal); // left
-      femaleData.push(femaleVal); // right
-    });
-
-    if (populationChart) {
-      populationChart.destroy();
+    for (let i = ageBrackets.length - 1; i >= 0; i--) {
+      const maleVal = parseFloat(document.getElementById(`male_${i}`).value) || 0;
+      const femaleVal = parseFloat(document.getElementById(`female_${i}`).value) || 0;
+      maleData.push(-maleVal); // negative for left bar
+      femaleData.push(femaleVal);
+      labels.push(ageBrackets[i]);
     }
 
-    const ctx = document.getElementById('populationChart').getContext('2d');
+    if (populationChart) populationChart.destroy();
 
+    const ctx = document.getElementById('populationChart').getContext('2d');
     populationChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ageBrackets.slice().reverse(), // youngest at bottom
+        labels: labels,
         datasets: [
           {
             label: 'Male',
-            data: maleData.slice().reverse(),
-            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-            barPercentage: 1.0,
-            categoryPercentage: 1.0,
+            data: maleData,
+            backgroundColor: 'rgba(33, 150, 243, 0.7)'
           },
           {
             label: 'Female',
-            data: femaleData.slice().reverse(),
-            backgroundColor: 'rgba(255, 99, 132, 0.7)',
-            barPercentage: 1.0,
-            categoryPercentage: 1.0,
+            data: femaleData,
+            backgroundColor: 'rgba(233, 30, 99, 0.7)'
           }
         ]
       },
@@ -177,7 +242,6 @@
         scales: {
           x: {
             stacked: true,
-            beginAtZero: true,
             ticks: {
               callback: val => Math.abs(val) + '%'
             },
@@ -188,26 +252,93 @@
           },
           y: {
             stacked: true,
-            reverse: true,
             title: {
               display: true,
               text: 'Age Group'
-            },
-            grid: {
-              offset: false
             }
           }
         },
         plugins: {
+          title: {
+            display: true,
+            text: 'Population Pyramid'
+          },
           tooltip: {
             callbacks: {
-              label: ctx => `${ctx.dataset.label}: ${Math.abs(ctx.parsed.x)}%`
+              label: function(context) {
+                return context.dataset.label + ': ' + Math.abs(context.parsed.x) + '%';
+              }
             }
+          },
+          legend: {
+            display: true,
+            position: 'top'
           }
         }
       }
     });
-  });
+
+    calculateStats();
+  }
+
+  function calculateStats() {
+    const males = ageBrackets.map((_, i) => parseFloat(document.getElementById(`male_${i}`).value) || 0);
+    const females = ageBrackets.map((_, i) => parseFloat(document.getElementById(`female_${i}`).value) || 0);
+    const maleTotal = males.reduce((a, b) => a + b, 0);
+    const femaleTotal = females.reduce((a, b) => a + b, 0);
+    const total = maleTotal + femaleTotal;
+    const youth = males[0] + males[1] + females[0] + females[1];
+
+    document.getElementById('total-pop').textContent = total.toFixed(1);
+    document.getElementById('male-total').textContent = maleTotal.toFixed(1);
+    document.getElementById('female-total').textContent = femaleTotal.toFixed(1);
+    document.getElementById('youth-ratio').textContent = ((youth / total) * 100).toFixed(1) + '%';
+    document.getElementById('stats').style.display = 'flex';
+  }
+
+  function generateProjectionChart() {
+    const pop2025 = parseFloat(document.getElementById("current-population").dataset.value);
+    if (!pop2025) return alert("Load a preset to get starting population.");
+    const br = parseFloat(document.getElementById("birthRate").value) / 100;
+    const dr = parseFloat(document.getElementById("deathRate").value) / 100;
+    const mr = parseFloat(document.getElementById("migrationRate").value) / 100;
+
+    const years = [], data = [];
+    let pop = pop2025;
+    for (let year = 2025; year <= 2100; year++) {
+      years.push(year);
+      data.push(Math.round(pop));
+      pop += pop * (br - dr + mr);
+    }
+
+    if (projectionChart) projectionChart.destroy();
+    const ctx = document.getElementById('projectionChart').getContext('2d');
+    projectionChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [{
+          label: 'Projected Population',
+          data: data,
+          fill: true,
+          borderColor: '#4CAF50',
+          backgroundColor: 'rgba(76, 175, 80, 0.2)',
+          tension: 0.3
+        }]
+      },
+      options: {
+        plugins: {
+          title: { display: true, text: "Projected Population (2025–2100)" }
+        },
+        scales: {
+          y: { title: { display: true, text: "Population" } },
+          x: { title: { display: true, text: "Year" } }
+        }
+      }
+    });
+  }
+
+  window.onload = initializeTable;
 </script>
 
 </body>
