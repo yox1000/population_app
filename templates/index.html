@@ -259,7 +259,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>🌍 Population Pyramid Generator</h1>
+  <h1> Population Pyramid Generator</h1>
 
   <div class="presets">
     <strong>📊 Country Presets:</strong><br/>
@@ -330,6 +330,28 @@
   <div class="chart-container">
     <canvas id="populationChart" width="800" height="400"></canvas>
   </div>
+
+<h2> Predict Demographic Rates with AI</h2>
+<div class="projection-section">
+  <div class="projection-inputs">
+    <div class="input-group">
+      <label>GDP per Capita ($):</label>
+      <input type="number" id="gdp" step="1" value="10000">
+    </div>
+    <div class="input-group">
+      <label>Life Expectancy (Years):</label>
+      <input type="number" id="life" step="0.1" value="75">
+    </div>
+    <div class="input-group">
+      <label>Urbanization (%):</label>
+      <input type="number" id="urban" step="0.1" value="60">
+    </div>
+  </div>
+  <div style="text-align: center;">
+    <button class="btn btn-secondary" onclick="predictRates()">🔍 Predict Rates with AI</button>
+  </div>
+</div>
+
 
   <h2>🔮 Population Projection (2025–2100)</h2>
   <div class="projection-section">
@@ -693,6 +715,32 @@
     // Show the click instruction
     document.getElementById('click-instruction').style.display = 'block';
   }
+  function predictRates() {
+  const gdp = parseFloat(document.getElementById("gdp").value);
+  const life = parseFloat(document.getElementById("life").value);
+  const urban = parseFloat(document.getElementById("urban").value);
+
+  fetch("/predict", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ gdp, life, urban })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      alert("AI Prediction Error: " + data.error);
+      return;
+    }
+    document.getElementById("birthRate").value = data.birthRate.toFixed(2);
+    document.getElementById("deathRate").value = data.deathRate.toFixed(2);
+    document.getElementById("migrationRate").value = data.migrationRate.toFixed(2);
+  })
+  .catch(err => {
+    console.error("Fetch error:", err);
+    alert("Failed to fetch AI prediction.");
+  });
+}
+
 
   window.onload = initializeTable;
 </script>
