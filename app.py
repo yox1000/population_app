@@ -75,5 +75,47 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/project_population", methods=["POST"])
+def project_population():
+    try:
+        data = request.get_json()
+        population = float(data.get("population", 0))
+        gdp = float(data.get("gdp", 0))
+        life = float(data.get("life", 0))
+        urban = float(data.get("urban", 0))
+        gdpScenario = data.get("gdpScenario", "medium")
+        lifeScenario = data.get("lifeScenario", "medium")
+        urbanScenario = data.get("urbanScenario", "medium")
+
+        # Simple scenario multipliers (these should match your JS scenarioRates or adjust accordingly)
+        scenario_growth = {
+            "high": 0.02,
+            "medium": 0.01,
+            "low": 0.005,
+            "stagnant": 0,
+            "decline": -0.01
+        }
+
+        gdp_growth = scenario_growth.get(gdpScenario, 0.01)
+        life_growth = scenario_growth.get(lifeScenario, 0.01)  # could be different scale
+        urban_growth = scenario_growth.get(urbanScenario, 0.01)  # could be different scale
+
+        years = list(range(2025, 2101, 5))
+        populations = []
+        current_pop = population
+
+        for year in years:
+            # For simplicity, just grow population by net growth rate influenced by GDP scenario
+            # In real app, use AI prediction and scenario modifiers to get birth/death/migration
+            net_growth_rate = gdp_growth - 0.005  # subtract small death rate estimate
+            current_pop = current_pop * (1 + net_growth_rate * 5)  # 5-year steps
+            populations.append(round(current_pop))
+
+        return jsonify({"years": years, "population": populations})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
