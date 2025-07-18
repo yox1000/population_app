@@ -4,6 +4,7 @@ import io
 import base64
 import json
 import pickle
+import joblib
 import numpy as np
 
 app = Flask(__name__)
@@ -14,14 +15,9 @@ AGE_BRACKETS = [
 ]
 
 # Load the trained AI models (must be in the same directory)
-with open("birth_model.pkl", "rb") as f:
-    birth_model = pickle.load(f)
-
-with open("death_model.pkl", "rb") as f:
-    death_model = pickle.load(f)
-
-with open("migration_model.pkl", "rb") as f:
-    migration_model = pickle.load(f)
+birth_model = joblib.load("birth_model.pkl")
+death_model = joblib.load("death_model.pkl")
+migration_model = joblib.load("migration_model.pkl")
 
 @app.route("/")
 def index():

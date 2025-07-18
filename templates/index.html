@@ -369,7 +369,39 @@
         <input type="number" id="migrationRate" step="0.1" value="0.0">
       </div>
     </div>
-    <div style="text-align: center;">
+    <div class="projection-inputs" style="margin-top: 20px; background: #f0f0f0; border-radius: 12px; padding: 15px;">
+      <div class="input-group">
+<label>GDP Growth:</label>
+<select id="gdpScenario">
+  <option value="high">High Growth</option>
+  <option value="medium">Medium Growth</option>
+  <option value="low">Low Growth</option>
+  <option value="stagnant">Stagnant</option>
+  <option value="decline">Decline</option>
+</select>
+
+<label>Life Expectancy Change:</label>
+<select id="lifeScenario">
+  <option value="high">High Growth</option>
+  <option value="medium">Medium Growth</option>
+  <option value="low">Low Growth</option>
+  <option value="stagnant">Stagnant</option>
+  <option value="decline">Decline</option>
+</select>
+
+<label>Urbanization Change:</label>
+<select id="urbanScenario">
+  <option value="high">High Growth</option>
+  <option value="medium">Medium Growth</option>
+  <option value="low">Low Growth</option>
+  <option value="stagnant">Stagnant</option>
+  <option value="decline">Decline</option>
+</select>
+
+    </div>
+      </div>
+
+    <div style="text-align: center; margin-top: 15px;">
       <button class="btn btn-primary" onclick="generateProjectionChart()">🚀 Generate Population Projection</button>
     </div>
   </div>
@@ -629,22 +661,47 @@
     document.getElementById('stats').style.display = 'flex';
   }
 
-  function generateProjectionChart() {
+function generateProjectionChart() {
     const pop2025 = parseFloat(document.getElementById("current-population").dataset.value);
     if (!pop2025) return alert("Load a preset to get starting population.");
-    const br = parseFloat(document.getElementById("birthRate").value) / 100;
-    const dr = parseFloat(document.getElementById("deathRate").value) / 100;
-    const mr = parseFloat(document.getElementById("migrationRate").value) / 100;
 
-    const years = [], data = [];
-    let pop = pop2025;
-    for (let year = 2025; year <= 2100; year++) {
-      years.push(year);
-      data.push(Math.round(pop));
-      pop += pop * (br - dr + mr);
-    }
+    // Instead of local growth, send inputs & scenarios to backend
+    const gdp = parseFloat(document.getElementById("gdp").value);
+    const life = parseFloat(document.getElementById("life").value);
+    const urban = parseFloat(document.getElementById("urban").value);
 
+    const gdpScenario = document.getElementById("gdpScenario").value;
+    const lifeScenario = document.getElementById("lifeScenario").value;
+    const urbanScenario = document.getElementById("urbanScenario").value;
+
+    fetch("/project_population", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        population: pop2025,
+        gdp, life, urban,
+        gdpScenario,
+        lifeScenario,
+        urbanScenario
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        alert("Projection error: " + data.error);
+        return;
+      }
+      plotProjectionChart(data.years, data.population);
+    })
+    .catch(err => {
+      console.error("Fetch error:", err);
+      alert("Failed to fetch population projection.");
+    });
+  }
+
+  function plotProjectionChart(years, population) {
     if (projectionChart) projectionChart.destroy();
+
     const ctx = document.getElementById('projectionChart').getContext('2d');
     projectionChart = new Chart(ctx, {
       type: 'line',
@@ -652,12 +709,12 @@
         labels: years,
         datasets: [{
           label: 'Projected Population',
-          data: data,
+          data: population,
           fill: true,
           borderColor: '#4CAF50',
           backgroundColor: 'rgba(76, 175, 80, 0.3)',
           tension: 0.4,
-          pointRadius: 4,
+          pointRadius: 5,
           pointHoverRadius: 8,
           pointBackgroundColor: '#4CAF50',
           pointBorderColor: '#2E7D32',
@@ -666,55 +723,34 @@
       },
       options: {
         responsive: true,
-        onClick: (event, activeElements) => {
-          if (activeElements.length > 0) {
-            const index = activeElements[0].index;
-            const year = years[index];
-            updatePyramidForYear(year);
-          }
-        },
         plugins: {
-          title: { 
-            display: true, 
-            text: "Projected Population (2025–2100) - Click any point to update pyramid!",
-            font: {
-              size: 16,
-              weight: 'bold'
-            }
+          title: {
+            display: true,
+            text: "Projected Population (2025–2100) - Click points to update pyramid",
+            font: { size: 16, weight: 'bold' }
           }
         },
         scales: {
-          y: { 
-            title: { 
-              display: true, 
-              text: "Population",
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
-            }
-          },
-          x: { 
-            title: { 
-              display: true, 
-              text: "Year",
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
-            }
-          }
+          y: { title: { display: true, text: "Population" } },
+          x: { title: { display: true, text: "Year" } }
         },
         interaction: {
-          intersect: false,
-          mode: 'index'
+          mode: 'nearest',
+          intersect: true
+        },
+        onClick: (event, activeElements) => {
+          if (activeElements.length > 0) {
+            const idx = activeElements[0].index;
+            const year = years[idx];
+            updatePyramidForYear(year);
+          }
         }
       }
     });
-    
-    // Show the click instruction
+
     document.getElementById('click-instruction').style.display = 'block';
   }
+
   function predictRates() {
   const gdp = parseFloat(document.getElementById("gdp").value);
   const life = parseFloat(document.getElementById("life").value);
@@ -744,6 +780,6 @@
 
   window.onload = initializeTable;
 </script>
-
+<script src="/static/js/projection.js"></script>
 </body>
 </html>
