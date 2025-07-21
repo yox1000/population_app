@@ -14,11 +14,12 @@ async function getInitialData(country) {
   const res = await fetch(`/get-country-data/${country}`);
   const data = await res.json();
   return {
-    gdp: data.gdp,
-    life: data.life,
-    urban: data.urban,
+    gdp: data.gdp_per_capita,
+    life: data.life_expectancy,
+    urban: data.urbanization,
     population: data.population
-  };
+};
+
 }
 
 window.projectPopulation = async function (country) {

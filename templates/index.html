@@ -459,23 +459,45 @@
   }
 
   function loadPreset(name) {
-    const preset = presets[name];
-    document.getElementById('current-population').textContent = preset.population.toLocaleString();
-    document.getElementById('current-population').dataset.value = preset.population;
-    
-    // Store base population data for calculations
-    basePopulationData = {
-      male: [...preset.male],
-      female: [...preset.female]
-    };
-    
-    ageBrackets.forEach((_, i) => {
-      document.getElementById(`male_${i}`).value = preset.male[i];
-      document.getElementById(`female_${i}`).value = preset.female[i];
+  // First, fetch the complete data from the backend
+  fetch(`/get-country-data/${name}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert(`Error loading ${name}: ${data.error}`);
+        return;
+      }
+      
+      // Set population display
+      document.getElementById('current-population').textContent = data.population.toLocaleString();
+      document.getElementById('current-population').dataset.value = data.population;
+      
+      // Auto-fill the economic indicators
+      document.getElementById("gdp").value = data.gdp_per_capita;
+      document.getElementById("life").value = data.life_expectancy;
+      document.getElementById("urban").value = data.urbanization;
+      
+      // Store base population data for calculations
+      basePopulationData = {
+        male: [...data.male_pyramid_data],
+        female: [...data.female_pyramid_data]
+      };
+      
+      // Fill the age bracket inputs
+      ageBrackets.forEach((_, i) => {
+        document.getElementById(`male_${i}`).value = data.male_pyramid_data[i];
+        document.getElementById(`female_${i}`).value = data.female_pyramid_data[i];
+      });
+      
+      // Update statistics and generate chart
+      calculateStats();
+      generateChart(new Event("submit"));
+    })
+    .catch(error => {
+      console.error('Error fetching country data:', error);
+      alert(`Failed to load data for ${name}. Please try again.`);
     });
-    calculateStats();
-    generateChart(new Event("submit"));
-  }
+}
 
   function clearData() {
     ageBrackets.forEach((_, i) => {

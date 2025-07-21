@@ -1,0 +1,58 @@
+{
+  "afghanistan": {
+    "population": 42270000,
+    "male_pyramid_data": [17.2, 12.9, 7.8, 4.8, 3.4, 2.2, 1.6, 0.7, 0.2, 0.1, 0.1],
+    "female_pyramid_data": [16.3, 12.0, 8.4, 4.7, 3.6, 2.2, 1.2, 0.5, 0.1, 0.1, 0.0],
+    "gdp_per_capita": 560.0,
+    "life_expectancy": 63.0,
+    "urbanization": 26.0
+  },
+  "ecuador": {
+    "population": 18100000,
+    "male_pyramid_data": [9.9, 9.8, 8.6, 7.2, 5.7, 4.4, 3.5, 1.6, 0.7, 0.3, 0.1],
+    "female_pyramid_data": [9.5, 9.6, 7.8, 6.8, 5.0, 3.1, 2.0, 1.3, 0.2, 0.1, 0.0],
+    "gdp_per_capita": 7000.0,
+    "life_expectancy": 77.0,
+    "urbanization": 65.0
+  },
+  "italy": {
+    "population": 58850000,
+    "male_pyramid_data": [4.3, 5.2, 5.5, 6.0, 7.7, 8.3, 6.0, 4.9, 2.7, 1.2, 0.2],
+    "female_pyramid_data": [4.0, 4.8, 5.8, 6.6, 7.9, 7.9, 5.1, 4.1, 2.1, 1.0, 0.1],
+    "gdp_per_capita": 41091.0,
+    "life_expectancy": 83.0,
+    "urbanization": 72.0
+  },
+  "qatar": {
+    "population": 2820000,
+    "male_pyramid_data": [5.5, 3.9, 22.0, 12.9, 7.2, 2.8, 1.5, 0.3, 0.1, 0.0, 0.0],
+    "female_pyramid_data": [5.3, 2.4, 7.4, 8.2, 4.5, 1.8, 0.7, 0.1, 0.1, 0.0, 0.0],
+    "gdp_per_capita": 67000.0,
+    "life_expectancy": 81.0,
+    "urbanization": 99.0
+  },
+  "united states": {
+    "population": 334800000,
+    "male_pyramid_data": [5.9, 6.2, 6.5, 6.8, 7.0, 7.2, 6.0, 5.0, 3.0, 1.5, 0.5],
+    "female_pyramid_data": [5.7, 6.0, 6.3, 6.6, 6.9, 7.1, 6.2, 5.3, 3.2, 1.6, 0.6],
+    "gdp_per_capita": 75000.0,
+    "life_expectancy": 78.0,
+    "urbanization": 83.0
+  },
+  "china": {
+    "population": 1412000000,
+    "male_pyramid_data": [7.0, 7.5, 8.0, 8.5, 9.0, 8.0, 7.0, 6.0, 4.0, 2.0, 0.8],
+    "female_pyramid_data": [6.8, 7.2, 7.8, 8.3, 8.8, 8.2, 7.2, 6.2, 4.2, 2.1, 0.9],
+    "gdp_per_capita": 14500.0,
+    "life_expectancy": 77.0,
+    "urbanization": 64.0
+  },
+  "india": {
+    "population": 1428000000,
+    "male_pyramid_data": [12.0, 11.5, 10.0, 9.0, 8.0, 7.0, 5.0, 3.0, 1.5, 0.5, 0.1],
+    "female_pyramid_data": [11.5, 11.0, 9.5, 8.5, 7.5, 6.5, 4.5, 2.5, 1.2, 0.4, 0.0],
+    "gdp_per_capita": 2800.0,
+    "life_expectency": 70.0,
+    "urbanization": 35.0
+  }
+}
