@@ -21,7 +21,7 @@ AGE_BRACKETS = [
     "50-59", "60-69", "70-79", "80-89", "90-99", "100+"
 ]
 
-# Load demographics data from JSON file
+# Load demographics data from JSON file for filling in frontend
 def load_demographics_data():
     try:
         with open('demographics.json', 'r') as f:
@@ -54,23 +54,20 @@ def index():
 
 @app.route("/get-country-data/<country>")
 def get_country_data(country):
-    """Get demographic data for a specific country"""
+    """Gets demographic data for a specified country"""
     try:
         country_lower = country.lower()
         if country_lower not in DEMOGRAPHICS_DATA:
             return jsonify({"error": f"Country '{country}' not found"}), 404
         
         data = DEMOGRAPHICS_DATA[country_lower]
-        
-        # Handle potential typo in India data (life_expectency vs life_expectancy)
-        life_expectancy = data.get('life_expectancy', data.get('life_expectency', 70))
-        
         return jsonify({
+            #fallback included as second value in data.get ()
             "population": data.get("population", 0),
             "male_pyramid_data": data.get("male_pyramid_data", [0] * 11),
             "female_pyramid_data": data.get("female_pyramid_data", [0] * 11),
             "gdp_per_capita": data.get("gdp_per_capita", 0),
-            "life_expectancy": life_expectancy,
+            "life_expectancy": data.get("life_expectancy", 70),
             "urbanization": data.get("urbanization", 0)
         })
         
