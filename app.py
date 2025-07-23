@@ -9,6 +9,7 @@ import numpy as np
 import logging
 from datetime import datetime
 import os
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -62,14 +63,17 @@ def get_country_data(country):
         
         data = DEMOGRAPHICS_DATA[country_lower]
         return jsonify({
-            #fallback included as second value in data.get ()
             "population": data.get("population", 0),
             "male_pyramid_data": data.get("male_pyramid_data", [0] * 11),
             "female_pyramid_data": data.get("female_pyramid_data", [0] * 11),
             "gdp_per_capita": data.get("gdp_per_capita", 0),
             "life_expectancy": data.get("life_expectancy", 70),
-            "urbanization": data.get("urbanization", 0)
-        })
+            "urbanization": data.get("urbanization", 0),
+            "birth_rate": data.get("birth_rate", None),
+            "death_rate": data.get("death_rate", None),
+            "migration_rate": data.get("migration_rate", None)
+})
+
         
     except Exception as e:
         logger.error(f"Error getting country data: {e}")
@@ -137,52 +141,41 @@ def generate_chart():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        if not all([birth_model, death_model, migration_model]):
-            return jsonify({"error": "AI models not available"}), 503
-            
         data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-            
-        # Validate input parameters
-        required_fields = ["gdp", "life", "urban"]
-        for field in required_fields:
-            if field not in data:
-                return jsonify({"error": f"Missing required field: {field}"}), 400
-                
-        gdp = float(data["gdp"])
-        life = float(data["life"])
-        urban = float(data["urban"])
-        
-        # Validate ranges
-        if gdp < 0 or life < 0 or life > 120 or urban < 0 or urban > 100:
-            return jsonify({"error": "Invalid parameter ranges"}), 400
-        
-        # Prepare features for prediction
-        features = np.array([[gdp, life, urban]])
+        gdp = float(data.get("gdp"))
+        life = float(data.get("life"))
+        urban = float(data.get("urban"))
+
+        # List of full feature names used during training
+        full_features = birth_model.feature_names_in_  # requires scikit-learn >= 1.0
+
+        # Initialize all to 0
+        input_data = dict.fromkeys(full_features, 0.0)
+
+        # Set the actual values for the 3 inputs
+        input_data['GDP_per_capita'] = gdp
+        input_data['Life_expectancy'] = life
+        input_data['Urbanization'] = urban
+
+        # Optionally, set the correct region if known — for now, leave region dummy-encoded as 0s
+
+        # Convert to DataFrame
+        input_df = pd.DataFrame([input_data])
 
         # Make predictions
-        birth = float(birth_model.predict(features)[0])
-        death = float(death_model.predict(features)[0])
-        migration = float(migration_model.predict(features)[0])
-        
-        # Ensure reasonable bounds
-        birth = max(0, min(birth, 50))  # Birth rate between 0-50 per 1000
-        death = max(0, min(death, 50))  # Death rate between 0-50 per 1000
-        migration = max(-20, min(migration, 20))  # Migration rate between -20 to 20 per 1000
+        birth = birth_model.predict(input_df)[0]
+        death = death_model.predict(input_df)[0]
+        migration = migration_model.predict(input_df)[0]
 
         return jsonify({
-            "birthRate": round(birth, 2),
-            "deathRate": round(death, 2),
-            "migrationRate": round(migration, 2)
+            "birthRate": birth,
+            "deathRate": death,
+            "migrationRate": migration
         })
-        
-    except ValueError as e:
-        logger.error(f"Value error in predict: {e}")
-        return jsonify({"error": "Invalid numeric values provided"}), 400
+
     except Exception as e:
-        logger.error(f"Error in prediction: {e}")
-        return jsonify({"error": "Prediction failed"}), 500
+        print("Value error in predict:", e)
+        return jsonify({"error": "AI Prediction Error: Invalid numeric values provided"}), 400
 
 @app.route("/project_population", methods=["POST"])
 def project_population():

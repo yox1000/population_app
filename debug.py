@@ -1,4 +1,4 @@
-import pickle
-with open("birth_model.pkl", "rb") as f:
-    birth_model = pickle.load(f)
+import joblib
+
+birth_model = joblib.load("birth_model.pkl")
 print(type(birth_model))

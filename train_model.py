@@ -11,7 +11,7 @@ df_pct = df.groupby('Country', group_keys=False).apply(
         GDP_per_capita=group['GDP_per_capita'].pct_change() * 100,
         Life_expectancy=group['Life_expectancy'].pct_change() * 100,
         Urbanization=group['Urbanization'].pct_change() * 100,
-        Fertility_rate=group['Fertility_rate'].pct_change() * 100,
+        Birth_rate=group['Birth_rate'].pct_change() * 100,
         Death_rate=group['Death_rate'].pct_change() * 100,
         Migration_rate=group['Migration_rate'].pct_change() * 100
     )
@@ -26,7 +26,7 @@ if 'Region' in df_pct.columns:
 
 # Clean infinite and missing values
 df_pct.replace([float('inf'), -float('inf')], pd.NA, inplace=True)
-df_pct.dropna(subset=['Fertility_rate', 'Death_rate', 'Migration_rate'], inplace=True)
+df_pct.dropna(subset=['Birth_rate', 'Death_rate', 'Migration_rate'], inplace=True)
 
 # Define input features
 features = ['GDP_per_capita', 'Life_expectancy', 'Urbanization'] + \
@@ -34,7 +34,7 @@ features = ['GDP_per_capita', 'Life_expectancy', 'Urbanization'] + \
 X = df_pct[features]
 
 # Define targets
-y_birth = df_pct['Fertility_rate']
+y_birth = df_pct['Birth_rate']
 y_death = df_pct['Death_rate']
 y_migration = df_pct['Migration_rate']
 

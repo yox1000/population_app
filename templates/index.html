@@ -336,7 +336,10 @@
     <canvas id="populationChart" width="800" height="400"></canvas>
   </div>
 
-<h2> Predict Demographic Rates with AI</h2>
+<h2>
+  Population Projection (2025–2100)
+  <small style="font-weight: normal;">(Rates from <span id="rateYear">2025</span>)</small>
+</h2>
 <div class="projection-section">
   <div class="projection-inputs">
     <div class="input-group">
@@ -372,6 +375,10 @@
       <div class="input-group">
         <label>✈️ Migration Rate (%):</label>
         <input type="number" id="migrationRate" step="0.1" value="0.0">
+      </div>
+      <div class="input-group">
+        <label>Year:</label>
+        <input type="number" id="year" step="0.1" value="2.0">
       </div>
     </div>
     <div class="projection-inputs" style="margin-top: 20px; background: #f0f0f0; border-radius: 12px; padding: 15px;">
@@ -464,7 +471,6 @@
   }
 
   function loadPreset(name) {
-  // First, fetch the complete data from the backend
   fetch(`/get-country-data/${name}`)
     .then(response => response.json())
     .then(data => {
@@ -472,28 +478,32 @@
         alert(`Error loading ${name}: ${data.error}`);
         return;
       }
-      
-      // Set population display
+
       document.getElementById('current-population').textContent = data.population.toLocaleString();
       document.getElementById('current-population').dataset.value = data.population;
-      
+
       // Auto-fill the economic indicators
-      document.getElementById("gdp").value = data.gdp_per_capita;
-      document.getElementById("life").value = data.life_expectancy;
-      document.getElementById("urban").value = data.urbanization;
-      
-      // Store base population data for calculations
+      document.getElementById("gdp").value = data.gdp_per_capita ?? "";
+      document.getElementById("life").value = data.life_expectancy ?? "";
+      document.getElementById("urban").value = data.urbanization ?? "";
+
+      // Auto-fill demographic rates
+      document.getElementById("birthRate").value = data.birth_rate ?? "";
+      document.getElementById("deathRate").value = data.death_rate ?? "";
+      document.getElementById("migrationRate").value = data.migration_rate ?? "";
+      document.getElementById("rateYear").textContent = data.year ?? "2025"; // default to 2025
+
       basePopulationData = {
         male: [...data.male_pyramid_data],
         female: [...data.female_pyramid_data]
       };
-      
+
       // Fill the age bracket inputs
       ageBrackets.forEach((_, i) => {
         document.getElementById(`male_${i}`).value = data.male_pyramid_data[i];
         document.getElementById(`female_${i}`).value = data.female_pyramid_data[i];
       });
-      
+
       // Update statistics and generate chart
       calculateStats();
       generateChart(new Event("submit"));
@@ -503,20 +513,6 @@
       alert(`Failed to load data for ${name}. Please try again.`);
     });
 }
-
-  function clearData() {
-    ageBrackets.forEach((_, i) => {
-      document.getElementById(`male_${i}`).value = '';
-      document.getElementById(`female_${i}`).value = '';
-    });
-    document.getElementById('current-population').textContent = '—';
-    document.getElementById('current-population').dataset.value = '';
-    basePopulationData = null;
-    if (populationChart) populationChart.destroy();
-    if (projectionChart) projectionChart.destroy();
-    document.getElementById('stats').style.display = 'none';
-    document.getElementById('click-instruction').style.display = 'none';
-  }
 
   function calculateProjectedDemographics(yearsDiff, birthRate, deathRate) {
     if (!basePopulationData) return null;
