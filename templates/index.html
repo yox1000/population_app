@@ -5,290 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Population Pyramid Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      background: linear-gradient(135deg, #3a08cf 0%, #304d61 100%);
-      min-height: 100vh;
-    }
-    
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      font-size: 2.5rem;
-      margin-bottom: 30px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    h2 {
-      text-align: center;
-      color: #34495e;
-      font-size: 1.8rem;
-      margin: 40px 0 20px 0;
-    }
-    
-    .presets {
-      margin-bottom: 30px;
-      padding: 20px;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    
-    .presets strong {
-      color: white;
-      font-size: 1.1rem;
-      margin-bottom: 15px;
-      display: block;
-    }
-    
-    .btn {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      margin: 5px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-      background: linear-gradient(45deg, #764ba2, #667eea);
-    }
-    
-    .btn:active {
-      transform: translateY(0);
-    }
-    
-    .btn-clear {
-      background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-    }
-    
-    .btn-clear:hover {
-      background: linear-gradient(45deg, #ee5a24, #ff6b6b);
-    }
-    
-    .btn-primary {
-      background: linear-gradient(45deg, #4CAF50, #45a049);
-      padding: 15px 30px;
-      font-size: 16px;
-    }
-    
-    .btn-primary:hover {
-      background: linear-gradient(45deg, #45a049, #4CAF50);
-    }
-    
-    .btn-secondary {
-      background: linear-gradient(45deg, #2196F3, #1976D2);
-    }
-    
-    .btn-secondary:hover {
-      background: linear-gradient(45deg, #1976D2, #2196F3);
-    }
-    
-    .current-pop-display {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 20px 0;
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: bold;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    
-    .form-section, .projection-section {
-      margin-bottom: 30px;
-    }
-    
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      margin: 20px 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    
-    .stat-item {
-      text-align: center;
-      color: #2c3e50;
-    }
-    
-    .stat-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #2c3e50;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-    
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border-bottom: 1px solid #eee;
-    }
-    
-    th {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      font-weight: 600;
-    }
-    
-    .male-header {
-      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-    }
-    
-    .female-header {
-      background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
-    }
-    
-    input[type="number"] {
-      width: 80px;
-      padding: 8px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      text-align: center;
-      transition: border-color 0.3s ease;
-    }
-    
-    input[type="number"]:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-    
-    .chart-container {
-      margin: 30px 0;
-      padding: 20px;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-    }
-    
-    .projection-inputs {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      padding: 20px;
-      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-      border-radius: 15px;
-    }
-    
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .input-group label {
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #2c3e50;
-    }
-    
-    .input-group input {
-      width: 100px;
-    }
-    
-    .click-instruction {
-      background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
-      color: #2c3e50;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 15px 0;
-      text-align: center;
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    @media (max-width: 768px) {
-      .container {
-        padding: 20px;
-      }
-      
-      .stats {
-        flex-direction: column;
-        gap: 15px;
-      }
-      
-      .projection-inputs {
-        flex-direction: column;
-        gap: 15px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
 <div class="container">
-  <h1> Population Pyramid Generator</h1>
+  <h1>🏛️ Population Pyramid Generator</h1>
 
   <div class="presets">
     <strong>📊 Country Presets:</strong><br/>
     <button class="btn" onclick="loadPreset('afghanistan')">
-  <img src="/static/afghanistan.png" alt="Afghanistan Flag" style="height: 1em; vertical-align: middle;"> Afghanistan
-</button>
+      <img src="/static/afghanistan.png" alt="Afghanistan Flag" style="height: 1em; vertical-align: middle;"> Afghanistan
+    </button>
 
-<button class="btn" onclick="loadPreset('ecuador')">
-  <img src="/static/ecuador.png" alt="Ecuador Flag" style="height: 1em; vertical-align: middle;"> Ecuador
-</button>
+    <button class="btn" onclick="loadPreset('ecuador')">
+      <img src="/static/ecuador.png" alt="Ecuador Flag" style="height: 1em; vertical-align: middle;"> Ecuador
+    </button>
 
-<button class="btn" onclick="loadPreset('italy')">
-  <img src="/static/italy.png" alt="Italy Flag" style="height: 1em; vertical-align: middle;"> Italy
-</button>
+    <button class="btn" onclick="loadPreset('italy')">
+      <img src="/static/italy.png" alt="Italy Flag" style="height: 1em; vertical-align: middle;"> Italy
+    </button>
 
-<button class="btn" onclick="loadPreset('qatar')">
-  <img src="/static/qatar.png" alt="Qatar Flag" style="height: 1em; vertical-align: middle;"> Qatar
-</button>
+    <button class="btn" onclick="loadPreset('qatar')">
+      <img src="/static/qatar.png" alt="Qatar Flag" style="height: 1em; vertical-align: middle;"> Qatar
+    </button>
 
-<button class="btn" onclick="loadPreset('china')"> China </button>
+    <button class="btn" onclick="loadPreset('china')">🇨🇳 China</button>
 
-<button class="btn" onclick="loadPreset('india')"> India </button>
+    <button class="btn" onclick="loadPreset('india')">🇮🇳 India</button>
 
-
-<button class="btn btn-clear" onclick="clearData()">
-  🗑️ Clear
-</button>
-
-
+    <button class="btn btn-clear" onclick="clearData()">
+      🗑️ Clear
+    </button>
   </div>
 
   <div class="current-pop-display">
@@ -308,7 +55,7 @@
       <tbody id="age-table"></tbody>
     </table>
     <div style="text-align: center;">
-      <button type="submit" class="btn btn-primary"> Generate Population Pyramid</button>
+      <button type="submit" class="btn btn-primary">Generate Population Pyramid</button>
       <button type="button" class="btn btn-secondary" onclick="calculateStats()">Calculate</button>
     </div>
   </form>
@@ -336,90 +83,57 @@
     <canvas id="populationChart" width="800" height="400"></canvas>
   </div>
 
-<h2>
-  Population Projection (2025–2100)
-  <small style="font-weight: normal;">(Rates from <span id="rateYear">2025</span>)</small>
-</h2>
-<div class="projection-section">
-  <div class="projection-inputs">
-    <div class="input-group">
-      <label>GDP per Capita ($):</label>
-      <input type="number" id="gdp" step="1" value="10000">
-    </div>
-    <div class="input-group">
-      <label>Life Expectancy (Years):</label>
-      <input type="number" id="life" step="0.1" value="75">
-    </div>
-    <div class="input-group">
-      <label>Urbanization (%):</label>
-      <input type="number" id="urban" step="0.1" value="60">
-    </div>
-  </div>
-  <div style="text-align: center;">
-    <button class="btn btn-secondary" onclick="predictRates()">🔍 Predict Rates with AI</button>
-  </div>
-</div>
-
-
-  <h2> Population Projection (2025–2100)</h2>
+  <h2>🔮 AI-Powered Population Projection (2025–2100)</h2>
+  
   <div class="projection-section">
     <div class="projection-inputs">
       <div class="input-group">
-        <label>📈 Birth Rate (%):</label>
-        <input type="number" id="birthRate" step="0.1" value="2.0">
+        <label>📈 Birth Rate (per 1000):</label>
+        <input type="number" id="birthRate" step="0.1" value="20.0">
       </div>
       <div class="input-group">
-        <label>💀 Death Rate (%):</label>
-        <input type="number" id="deathRate" step="0.1" value="1.0">
+        <label>💀 Death Rate (per 1000):</label>
+        <input type="number" id="deathRate" step="0.1" value="10.0">
       </div>
       <div class="input-group">
-        <label>✈️ Migration Rate (%):</label>
+        <label>✈️ Migration Rate (per 1000):</label>
         <input type="number" id="migrationRate" step="0.1" value="0.0">
       </div>
-      <div class="input-group">
-        <label>Year:</label>
-        <input type="number" id="year" step="0.1" value="2.0">
-      </div>
     </div>
+
     <div class="projection-inputs" style="margin-top: 20px; background: #f0f0f0; border-radius: 12px; padding: 15px;">
+      <h3 style="margin-top: 0; color: #2c3e50; text-align: center;">📊 Growth Scenario Settings</h3>
       <div class="input-group">
-<label>GDP Growth:</label>
-<select id="gdpScenario">
-  <option value="high">High Growth</option>
-  <option value="medium">Medium Growth</option>
-  <option value="low">Low Growth</option>
-  <option value="stagnant">Stagnant</option>
-  <option value="decline">Decline</option>
-</select>
+        <label>💰 GDP Growth Rate (% per year):</label>
+        <input type="number" id="gdpGrowth" step="0.1" value="2.0" min="-10" max="15">
 
-<label>Life Expectancy Change:</label>
-<select id="lifeScenario">
-  <option value="high">High Growth</option>
-  <option value="medium">Medium Growth</option>
-  <option value="low">Low Growth</option>
-  <option value="stagnant">Stagnant</option>
-  <option value="decline">Decline</option>
-</select>
+        <label>🏥 Life Expectancy Growth (% per year):</label>
+        <input type="number" id="lifeGrowth" step="0.1" value="1.0" min="-5" max="10">
 
-<label>Urbanization Change:</label>
-<select id="urbanScenario">
-  <option value="high">High Growth</option>
-  <option value="medium">Medium Growth</option>
-  <option value="low">Low Growth</option>
-  <option value="stagnant">Stagnant</option>
-  <option value="decline">Decline</option>
-</select>
-
-    </div>
+        <label>🏙️ Urbanization Growth (% per year):</label>
+        <input type="number" id="urbanGrowth" step="0.1" value="1.0" min="-5" max="10">
       </div>
+    </div>
+
+    <div class="projection-inputs" style="margin-top: 15px; background: #e8f4f8; border-radius: 12px; padding: 15px;">
+      <div class="input-group">
+        <label>📅 Years to Project:</label>
+        <select id="yearsToProject">
+          <option value="25">25 years (to 2050)</option>
+          <option value="50">50 years (to 2075)</option>
+          <option value="75" selected>75 years (to 2100)</option>
+        </select>
+      </div>
+    </div>
 
     <div style="text-align: center; margin-top: 15px;">
-      <button class="btn btn-primary" onclick="generateProjectionChart()">🚀 Generate Population Projection</button>
+      <button class="btn btn-primary" onclick="generateProjectionChart()">🚀 Generate AI Population Projection</button>
     </div>
   </div>
 
   <div class="click-instruction" id="click-instruction" style="display:none;">
-    🖱️ Click on any point in the projection chart below to update the population pyramid for that year!
+    🖱️ Click on any point in the projection chart below to update the population pyramid for that year!<br>
+    <small><strong>Note:</strong> The AI models predict how demographic rates change over time based on your growth scenarios.</small>
   </div>
 
   <div class="chart-container">
@@ -427,382 +141,6 @@
   </div>
 </div>
 
-<script>
-  const ageBrackets = ["0-9", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99", "100+"];
-  let populationChart = null;
-  let projectionChart = null;
-  let basePopulationData = null; // Store original population data for calculations
-
-  const presets = {
-    afghanistan: {
-      population: 42270000,
-      male: [17.2, 12.9, 7.8, 4.8, 3.4, 2.2, 1.6, 0.7, 0.2, 0.1, 0.1],
-      female: [16.3, 12.0, 8.4, 4.7, 3.6, 2.2, 1.2, 0.5, 0.1, 0.1, 0.0]
-    },
-    ecuador: {
-      population: 18100000,
-      male: [9.9, 9.8, 8.6, 7.2, 5.7, 4.4, 3.5, 1.6, 0.7, 0.3, 0.1],
-      female: [9.5, 9.6, 7.8, 6.8, 5.0, 3.1, 2.0, 1.3, 0.2, 0.1, 0.0]
-    },
-    italy: {
-      population: 58850000,
-      male: [4.3, 5.2, 5.5, 6.0, 7.7, 8.3, 6.0, 4.9, 2.7, 1.2, 0.2],
-      female: [4.0, 4.8, 5.8, 6.6, 7.9, 7.9, 5.1, 4.1, 2.1, 1.0, 0.1]
-    },
-    qatar: {
-      population: 2820000,
-      male: [5.5, 3.9, 22.0, 12.9, 7.2, 2.8, 1.5, 0.3, 0.1, 0.0, 0.0],
-      female: [5.3, 2.4, 7.4, 8.2, 4.5, 1.8, 0.7, 0.1, 0.1, 0.0, 0.0]
-    }
-  };
-
-  function initializeTable() {
-    const tbody = document.getElementById('age-table');
-    tbody.innerHTML = '';
-    ageBrackets.forEach((bracket, i) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><strong>${bracket}</strong></td>
-        <td><input type="number" id="male_${i}" step="0.1" min="0" max="100"></td>
-        <td><input type="number" id="female_${i}" step="0.1" min="0" max="100"></td>
-      `;
-      tbody.appendChild(row);
-    });
-  }
-
-  function loadPreset(name) {
-  fetch(`/get-country-data/${name}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.error) {
-        alert(`Error loading ${name}: ${data.error}`);
-        return;
-      }
-
-      document.getElementById('current-population').textContent = data.population.toLocaleString();
-      document.getElementById('current-population').dataset.value = data.population;
-
-      // Auto-fill the economic indicators
-      document.getElementById("gdp").value = data.gdp_per_capita ?? "";
-      document.getElementById("life").value = data.life_expectancy ?? "";
-      document.getElementById("urban").value = data.urbanization ?? "";
-
-      // Auto-fill demographic rates
-      document.getElementById("birthRate").value = data.birth_rate ?? "";
-      document.getElementById("deathRate").value = data.death_rate ?? "";
-      document.getElementById("migrationRate").value = data.migration_rate ?? "";
-      document.getElementById("rateYear").textContent = data.year ?? "2025"; // default to 2025
-
-      basePopulationData = {
-        male: [...data.male_pyramid_data],
-        female: [...data.female_pyramid_data]
-      };
-
-      // Fill the age bracket inputs
-      ageBrackets.forEach((_, i) => {
-        document.getElementById(`male_${i}`).value = data.male_pyramid_data[i];
-        document.getElementById(`female_${i}`).value = data.female_pyramid_data[i];
-      });
-
-      // Update statistics and generate chart
-      calculateStats();
-      generateChart(new Event("submit"));
-    })
-    .catch(error => {
-      console.error('Error fetching country data:', error);
-      alert(`Failed to load data for ${name}. Please try again.`);
-    });
-}
-
-  function calculateProjectedDemographics(yearsDiff, birthRate, deathRate) {
-    if (!basePopulationData) return null;
-    
-    const projected = {
-      male: [...basePopulationData.male],
-      female: [...basePopulationData.female]
-    };
-    
-    // Simple aging model: shift populations up age brackets
-    const ageShift = Math.floor(yearsDiff / 10); // Each bracket represents 10 years
-    
-    if (ageShift > 0) {
-      // Age the population by shifting brackets
-      for (let shift = 0; shift < ageShift; shift++) {
-        // Shift all brackets up by one
-        for (let i = projected.male.length - 1; i > 0; i--) {
-          projected.male[i] = projected.male[i - 1] * (1 - deathRate / 100);
-          projected.female[i] = projected.female[i - 1] * (1 - deathRate / 100);
-        }
-        
-        // New births (0-9 age group)
-        const totalPop = projected.male.reduce((a, b) => a + b, 0) + projected.female.reduce((a, b) => a + b, 0);
-        const newBirths = totalPop * (birthRate / 100);
-        projected.male[0] = newBirths * 0.51; // Slightly more males born
-        projected.female[0] = newBirths * 0.49;
-      }
-    }
-    
-    return projected;
-  }
-
-  function updatePyramidForYear(year) {
-    if (!basePopulationData) return;
-    
-    const yearsDiff = year - 2025;
-    const birthRate = parseFloat(document.getElementById('birthRate').value);
-    const deathRate = parseFloat(document.getElementById('deathRate').value);
-    
-    const projected = calculateProjectedDemographics(yearsDiff, birthRate, deathRate);
-    
-    if (projected) {
-      // Update the input fields
-      ageBrackets.forEach((_, i) => {
-        document.getElementById(`male_${i}`).value = projected.male[i].toFixed(1);
-        document.getElementById(`female_${i}`).value = projected.female[i].toFixed(1);
-      });
-      
-      // Update the chart
-      generateChart(new Event("submit"));
-      
-      // Update the title to show the year
-      if (populationChart) {
-        populationChart.options.plugins.title.text = `Population Pyramid - Year ${year}`;
-        populationChart.update();
-      }
-    }
-  }
-
-  function generateChart(e) {
-    e.preventDefault();
-
-    // Collect and reverse data
-    const maleData = [];
-    const femaleData = [];
-    const labels = [];
-
-    for (let i = ageBrackets.length - 1; i >= 0; i--) {
-      const maleVal = parseFloat(document.getElementById(`male_${i}`).value) || 0;
-      const femaleVal = parseFloat(document.getElementById(`female_${i}`).value) || 0;
-      maleData.push(-maleVal); // negative for left bar
-      femaleData.push(femaleVal);
-      labels.push(ageBrackets[i]);
-    }
-
-    if (populationChart) populationChart.destroy();
-
-    const ctx = document.getElementById('populationChart').getContext('2d');
-    populationChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Male',
-            data: maleData,
-            backgroundColor: 'rgba(33, 150, 243, 0.8)',
-            borderColor: 'rgba(33, 150, 243, 1)',
-            borderWidth: 1
-          },
-          {
-            label: 'Female',
-            data: femaleData,
-            backgroundColor: 'rgba(233, 30, 99, 0.8)',
-            borderColor: 'rgba(233, 30, 99, 1)',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        scales: {
-          x: {
-            stacked: true,
-            ticks: {
-              callback: val => Math.abs(val) + '%'
-            },
-            title: {
-              display: true,
-              text: 'Population %',
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
-            }
-          },
-          y: {
-            stacked: true,
-            title: {
-              display: true,
-              text: 'Age Group',
-              font: {
-                size: 14,
-                weight: 'bold'
-              }
-            }
-          }
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: 'Population Pyramid - 2025',
-            font: {
-              size: 18,
-              weight: 'bold'
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                return context.dataset.label + ': ' + Math.abs(context.parsed.x) + '%';
-              }
-            }
-          },
-          legend: {
-            display: true,
-            position: 'top'
-          }
-        }
-      }
-    });
-
-    calculateStats();
-  }
-
-  function calculateStats() {
-    const males = ageBrackets.map((_, i) => parseFloat(document.getElementById(`male_${i}`).value) || 0);
-    const females = ageBrackets.map((_, i) => parseFloat(document.getElementById(`female_${i}`).value) || 0);
-    const maleTotal = males.reduce((a, b) => a + b, 0);
-    const femaleTotal = females.reduce((a, b) => a + b, 0);
-    const total = maleTotal + femaleTotal;
-    const youth = males[0] + males[1] + females[0] + females[1];
-
-    document.getElementById('total-pop').textContent = total.toFixed(1);
-    document.getElementById('male-total').textContent = maleTotal.toFixed(1);
-    document.getElementById('female-total').textContent = femaleTotal.toFixed(1);
-    document.getElementById('youth-ratio').textContent = ((youth / total) * 100).toFixed(1) + '%';
-    document.getElementById('stats').style.display = 'flex';
-  }
-
-function generateProjectionChart() {
-    const pop2025 = parseFloat(document.getElementById("current-population").dataset.value);
-    if (!pop2025) return alert("Load a preset to get starting population.");
-
-    // Instead of local growth, send inputs & scenarios to backend
-    const gdp = parseFloat(document.getElementById("gdp").value);
-    const life = parseFloat(document.getElementById("life").value);
-    const urban = parseFloat(document.getElementById("urban").value);
-
-    const gdpScenario = document.getElementById("gdpScenario").value;
-    const lifeScenario = document.getElementById("lifeScenario").value;
-    const urbanScenario = document.getElementById("urbanScenario").value;
-
-    fetch("/project_population", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        population: pop2025,
-        gdp, life, urban,
-        gdpScenario,
-        lifeScenario,
-        urbanScenario
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        alert("Projection error: " + data.error);
-        return;
-      }
-      plotProjectionChart(data.years, data.population);
-    })
-    .catch(err => {
-      console.error("Fetch error:", err);
-      alert("Failed to fetch population projection.");
-    });
-  }
-
-  function plotProjectionChart(years, population) {
-    if (projectionChart) projectionChart.destroy();
-
-    const ctx = document.getElementById('projectionChart').getContext('2d');
-    projectionChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: years,
-        datasets: [{
-          label: 'Projected Population',
-          data: population,
-          fill: true,
-          borderColor: '#4CAF50',
-          backgroundColor: 'rgba(76, 175, 80, 0.3)',
-          tension: 0.4,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          pointBackgroundColor: '#4CAF50',
-          pointBorderColor: '#2E7D32',
-          pointBorderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: "Projected Population (2025–2100) - Click points to update pyramid",
-            font: { size: 16, weight: 'bold' }
-          }
-        },
-        scales: {
-          y: { title: { display: true, text: "Population" } },
-          x: { title: { display: true, text: "Year" } }
-        },
-        interaction: {
-          mode: 'nearest',
-          intersect: true
-        },
-        onClick: (event, activeElements) => {
-          if (activeElements.length > 0) {
-            const idx = activeElements[0].index;
-            const year = years[idx];
-            updatePyramidForYear(year);
-          }
-        }
-      }
-    });
-
-    document.getElementById('click-instruction').style.display = 'block';
-  }
-
-  function predictRates() {
-  const gdp = parseFloat(document.getElementById("gdp").value);
-  const life = parseFloat(document.getElementById("life").value);
-  const urban = parseFloat(document.getElementById("urban").value);
-
-  fetch("/predict", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ gdp, life, urban })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.error) {
-      alert("AI Prediction Error: " + data.error);
-      return;
-    }
-    document.getElementById("birthRate").value = data.birthRate.toFixed(2);
-    document.getElementById("deathRate").value = data.deathRate.toFixed(2);
-    document.getElementById("migrationRate").value = data.migrationRate.toFixed(2);
-  })
-  .catch(err => {
-    console.error("Fetch error:", err);
-    alert("Failed to fetch AI prediction.");
-  });
-}
-
-
-  window.onload = initializeTable;
-</script>
-<script src="/static/js/projection.js"></script>
+<script src="{{ url_for('static', filename='js/projection.js') }}"></script>
 </body>
 </html>

@@ -72,9 +72,8 @@ def get_country_data(country):
             "birth_rate": data.get("birth_rate", None),
             "death_rate": data.get("death_rate", None),
             "migration_rate": data.get("migration_rate", None)
-})
+        })
 
-        
     except Exception as e:
         logger.error(f"Error getting country data: {e}")
         return jsonify({"error": "Failed to retrieve country data"}), 500
@@ -179,94 +178,106 @@ def predict():
 
 @app.route("/project_population", methods=["POST"])
 def project_population():
+    """Project population using test.py logic - predicting rate changes based on growth scenarios"""
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
             
         population = float(data.get("population", 0))
-        gdp = float(data.get("gdp", 0))
-        life = float(data.get("life", 0))
-        urban = float(data.get("urban", 0))
+        initial_birth_rate = float(data.get("birthRate", 20)) / 1000  # Convert to decimal
+        initial_death_rate = float(data.get("deathRate", 10)) / 1000  # Convert to decimal  
+        initial_migration_rate = float(data.get("migrationRate", 0)) / 1000  # Convert to decimal
+        
+        # User-specified yearly growth rates (percent)
+        user_gdp_growth = float(data.get("gdpGrowth", 2.0))
+        user_life_growth = float(data.get("lifeGrowth", 1.0))  
+        user_urban_growth = float(data.get("urbanGrowth", 1.0))
+        
+        years_to_project = int(data.get("yearsToProject", 75))  # Default to 75 years (2025-2100)
         
         if population <= 0:
             return jsonify({"error": "Invalid population value"}), 400
         
-        gdpScenario = data.get("gdpScenario", "medium")
-        lifeScenario = data.get("lifeScenario", "medium")
-        urbanScenario = data.get("urbanScenario", "medium")
+        if not all([birth_model, death_model, migration_model]):
+            return jsonify({"error": "AI models not available"}), 500
 
-        # Enhanced scenario multipliers with more realistic projections
-        scenario_multipliers = {
-            "high": {"gdp": 0.03, "life": 0.4, "urban": 1.0},
-            "medium": {"gdp": 0.015, "life": 0.2, "urban": 0.5},
-            "low": {"gdp": 0.005, "life": 0.1, "urban": 0.2},
-            "stagnant": {"gdp": 0, "life": 0, "urban": 0},
-            "decline": {"gdp": -0.015, "life": -0.1, "urban": -0.3}
-        }
+        # Lists to store yearly data
+        years = list(range(2025, 2025 + years_to_project + 1))
+        populations = [population]
+        
+        current_population = population
+        current_birth_rate = initial_birth_rate
+        current_death_rate = initial_death_rate
+        current_migration_rate = initial_migration_rate
 
-        gdp_mult = scenario_multipliers.get(gdpScenario, scenario_multipliers["medium"])["gdp"]
-        life_mult = scenario_multipliers.get(lifeScenario, scenario_multipliers["medium"])["life"]
-        urban_mult = scenario_multipliers.get(urbanScenario, scenario_multipliers["medium"])["urban"]
-
-        years = list(range(2025, 2101, 5))
-        populations = []
-        current_pop = population
-        current_gdp = gdp
-        current_life = life
-        current_urban = urban
-
-        for i, year in enumerate(years):
-            if i > 0:  # Don't modify the base year
-                # Apply scenario growth to indicators
-                current_gdp *= (1 + gdp_mult)
-                current_life += life_mult
-                current_urban = min(100, max(0, current_urban + urban_mult))
+        # Simulation loop following test.py logic
+        for year in range(1, years_to_project + 1):
+            try:
+                # Prepare input for AI models (growth rates as features)
+                X = np.array([[user_gdp_growth, user_life_growth, user_urban_growth]])
                 
-                # If AI models are available, use them for more accurate predictions
-                if all([birth_model, death_model, migration_model]):
-                    try:
-                        features = np.array([[current_gdp, current_life, current_urban]])
-                        birth_rate = float(birth_model.predict(features)[0]) / 1000  # Convert to rate
-                        death_rate = float(death_model.predict(features)[0]) / 1000
-                        migration_rate = float(migration_model.predict(features)[0]) / 1000
-                        
-                        net_growth_rate = birth_rate - death_rate + migration_rate
-                    except Exception as e:
-                        logger.warning(f"AI prediction failed, using fallback: {e}")
-                        net_growth_rate = gdp_mult - 0.008  # Fallback calculation
-                else:
-                    # Fallback calculation based on GDP scenario
-                    net_growth_rate = gdp_mult - 0.008
+                # Predict rate changes using AI models
+                birth_change = birth_model.predict(X)[0]
+                death_change = death_model.predict(X)[0]
+                migration_change = migration_model.predict(X)[0]
                 
-                # Apply demographic transition effects
-                # Higher GDP typically leads to lower birth rates
-                if current_gdp > 20000:
-                    net_growth_rate *= 0.7
-                elif current_gdp > 50000:
-                    net_growth_rate *= 0.5
+                # Clip changes to reasonable bounds (more conservative)
+                birth_change = np.clip(birth_change, -3, 3)    # max ±3% change per year
+                death_change = np.clip(death_change, -3, 3)    # max ±3% change per year  
+                migration_change = np.clip(migration_change, -1, 1)  # max ±1% for migration
                 
-                # Calculate population for next period (5-year projection)
-                current_pop = current_pop * (1 + net_growth_rate * 5)
+                # Apply the changes to current rates
+                current_birth_rate *= (1 + birth_change / 100)
+                current_death_rate *= (1 + death_change / 100)
+                current_migration_rate *= (1 + migration_change / 100)
                 
-                # Ensure population doesn't go negative
-                current_pop = max(current_pop, 1000)
-            
-            populations.append(round(current_pop))
+                # Ensure rates stay within realistic demographic bounds
+                current_birth_rate = max(0.005, min(0.050, current_birth_rate))  # 5-50 per 1000
+                current_death_rate = max(0.005, min(0.050, current_death_rate))   # 5-50 per 1000
+                current_migration_rate = max(-0.030, min(0.030, current_migration_rate))  # ±30 per 1000
+                
+                # Additional demographic reality checks
+                # Birth rates typically don't exceed death rates by more than 3% in modern contexts
+                if current_birth_rate - current_death_rate > 0.035:
+                    current_birth_rate = current_death_rate + 0.035
+                
+                # Death rates rarely go below 5 per 1000 even in healthiest populations
+                if current_death_rate < 0.005:
+                    current_death_rate = 0.005
+                
+                # Calculate new population
+                net_rate = current_birth_rate - current_death_rate + current_migration_rate
+                current_population = current_population * (1 + net_rate)
+                
+                # Ensure population doesn't go negative or grow unrealistically
+                current_population = max(current_population, 1000)
+                if current_population > population * 10:  # Cap at 10x original population
+                    current_population = population * 10
+                
+                populations.append(round(current_population))
+                
+            except Exception as model_error:
+                logger.warning(f"AI model prediction failed for year {year}: {model_error}")
+                # Fallback: use previous rates
+                net_rate = current_birth_rate - current_death_rate + current_migration_rate
+                current_population = current_population * (1 + net_rate)
+                current_population = max(current_population, 1000)
+                populations.append(round(current_population))
 
         return jsonify({
             "years": years, 
             "population": populations,
             "metadata": {
-                "scenarios": {
-                    "gdp": gdpScenario,
-                    "life": lifeScenario,
-                    "urban": urbanScenario
+                "growth_rates": {
+                    "gdp": user_gdp_growth,
+                    "life": user_life_growth,
+                    "urban": user_urban_growth
                 },
-                "final_indicators": {
-                    "gdp": round(current_gdp, 2),
-                    "life": round(current_life, 1),
-                    "urban": round(current_urban, 1)
+                "final_rates": {
+                    "birth": round(current_birth_rate * 1000, 3),  # Convert back to per 1000
+                    "death": round(current_death_rate * 1000, 3),
+                    "migration": round(current_migration_rate * 1000, 3)
                 }
             }
         })
