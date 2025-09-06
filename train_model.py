@@ -20,17 +20,12 @@ df_pct = df.groupby('Country', group_keys=False).apply(
 # Drop rows with NaN from pct_change
 df_pct = df_pct.dropna()
 
-# One-hot encode Region if present
-if 'Region' in df_pct.columns:
-    df_pct = pd.get_dummies(df_pct, columns=['Region'])
-
 # Clean infinite and missing values
 df_pct.replace([float('inf'), -float('inf')], pd.NA, inplace=True)
 df_pct.dropna(subset=['Birth_rate', 'Death_rate', 'Migration_rate'], inplace=True)
 
-# Define input features
-features = ['GDP_per_capita', 'Life_expectancy', 'Urbanization'] + \
-           [col for col in df_pct.columns if col.startswith('Region_')]
+# Define input features (no regions)
+features = ['GDP_per_capita', 'Life_expectancy', 'Urbanization']
 X = df_pct[features]
 
 # Define targets
@@ -47,9 +42,10 @@ birth_model.fit(X, y_birth)
 death_model.fit(X, y_death)
 migration_model.fit(X, y_migration)
 
-# Save models properly
+# Save models
 joblib.dump(birth_model, 'birth_model.pkl')
 joblib.dump(death_model, 'death_model.pkl')
 joblib.dump(migration_model, 'migration_model.pkl')
 
-print("Models trained and saved successfully.")
+print("Models trained and saved successfully (no regions).")
+
