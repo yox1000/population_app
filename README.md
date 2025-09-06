@@ -62,6 +62,8 @@ Include more data for models to train on.
 Add more variables, as there are countless variables that can affect population change.
 Just these three initial variables is a simplistic model.
 
+Fix age bracket projection in population pyramid 
+
 Compare multiple countries side-by-side.
 
 Export charts as PNG/PDF.
