@@ -5,7 +5,7 @@ It combines population pyramids (age/sex distributions) with long-term populatio
 
 ✨ Features
 
-📊 Population Pyramid: Automatically generated for a selected country (e.g., Italy, Qatar, Ecuador, Afghanistan).
+📊 Population Pyramid: Automatically generated for a selected country (e.g., Italy, Qatar, Ecuador, Afghanistan, China, India).
 
 📈 Population Projection: Forecasts population to 2100 based on:
 

@@ -99,48 +99,90 @@ function clearData() {
 function calculateProjectedDemographics(yearsDiff, birthRate, deathRate) {
   if (!basePopulationData) return null;
   
-  const projected = {
-    male: [...basePopulationData.male],
-    female: [...basePopulationData.female]
-  };
+  // Get the current total population to convert percentages to absolute numbers
+  const totalCurrentPop = parseFloat(document.getElementById("current-population").dataset.value) || 1000000;
   
-  // Simple aging model: shift populations up age brackets
-  const ageShift = Math.floor(yearsDiff / 10); // Each bracket represents 10 years
+  // Convert percentages to absolute population counts
+  const malePopulation = basePopulationData.male.map(pct => (pct / 100) * totalCurrentPop);
+  const femalePopulation = basePopulationData.female.map(pct => (pct / 100) * totalCurrentPop);
   
-  if (ageShift > 0 && ageShift < projected.male.length) {
-    // Create temporary arrays for the shifted data
-    const newMale = new Array(projected.male.length).fill(0);
-    const newFemale = new Array(projected.female.length).fill(0);
+  // Age-specific death rates (per 1000) - realistic mortality by age group
+  const ageSpecificDeathRates = [
+    deathRate * 0.1,  // 0-9: Very low mortality
+    deathRate * 0.2,  // 10-19: Low mortality  
+    deathRate * 0.3,  // 20-29: Low mortality
+    deathRate * 0.5,  // 30-39: Low-moderate mortality
+    deathRate * 0.8,  // 40-49: Moderate mortality
+    deathRate * 1.2,  // 50-59: Higher mortality
+    deathRate * 2.0,  // 60-69: High mortality
+    deathRate * 3.5,  // 70-79: Very high mortality
+    deathRate * 6.0,  // 80-89: Extremely high mortality
+    deathRate * 10.0, // 90-99: Maximum mortality
+    deathRate * 15.0  // 100+: Highest mortality
+  ];
+  
+  // Simulate year by year for accurate demographic transitions
+  let currentMale = [...malePopulation];
+  let currentFemale = [...femalePopulation];
+  
+  for (let year = 0; year < yearsDiff; year++) {
+    // Create new arrays for next year
+    const nextMale = new Array(currentMale.length).fill(0);
+    const nextFemale = new Array(currentFemale.length).fill(0);
     
-    // Shift existing populations up by ageShift brackets
-    for (let i = 0; i < projected.male.length - ageShift; i++) {
-      // Apply survival rate (reduce by death rate over the time period)
-      const survivalRate = Math.pow(1 - deathRate / 1000, yearsDiff);
-      newMale[i + ageShift] = projected.male[i] * survivalRate;
-      newFemale[i + ageShift] = projected.female[i] * survivalRate;
-    }
-    
-    // Calculate births for younger age groups
-    const totalReproductiveAge = projected.male.slice(2, 6).reduce((a, b) => a + b, 0) + 
-                                projected.female.slice(2, 6).reduce((a, b) => a + b, 0); // Ages 20-59
-    
-    if (totalReproductiveAge > 0) {
-      const annualBirths = totalReproductiveAge * (birthRate / 1000);
-      const totalBirths = annualBirths * yearsDiff;
+    // Age everyone up one bracket (every 10 years of simulation)
+    if ((year + 1) % 10 === 0) {
+      // Shift populations up by one age bracket
+      for (let i = currentMale.length - 1; i > 0; i--) {
+        const maleSurvivalRate = 1 - (ageSpecificDeathRates[i-1] / 1000);
+        const femaleSurvivalRate = 1 - (ageSpecificDeathRates[i-1] / 1000) * 0.8; // Women live longer
+        
+        nextMale[i] = currentMale[i-1] * maleSurvivalRate;
+        nextFemale[i] = currentFemale[i-1] * femaleSurvivalRate;
+      }
       
-      // Distribute births across younger age groups
-      for (let i = 0; i < Math.min(ageShift, projected.male.length); i++) {
-        const birthFraction = 1 / ageShift; // Evenly distribute across age groups
-        newMale[i] = totalBirths * 0.51 * birthFraction; // 51% male births
-        newFemale[i] = totalBirths * 0.49 * birthFraction; // 49% female births
+      // Calculate new births (0-9 age group)
+      const reproductiveAgeMales = currentMale.slice(2, 6).reduce((a, b) => a + b, 0); // Ages 20-59
+      const reproductiveAgeFemales = currentFemale.slice(2, 6).reduce((a, b) => a + b, 0);
+      const totalReproductive = reproductiveAgeMales + reproductiveAgeFemales;
+      
+      if (totalReproductive > 0) {
+        // Annual births based on reproductive age population
+        const annualBirths = totalReproductive * (birthRate / 1000);
+        const totalNewBirths = annualBirths * 10; // For the 10-year period
+        
+        nextMale[0] = totalNewBirths * 0.51; // 51% male births
+        nextFemale[0] = totalNewBirths * 0.49; // 49% female births
+      }
+      
+      currentMale = nextMale;
+      currentFemale = nextFemale;
+    } else {
+      // Non-aging years: just apply annual mortality
+      for (let i = 0; i < currentMale.length; i++) {
+        const maleSurvivalRate = 1 - (ageSpecificDeathRates[i] / 1000) / 10; // Annual mortality
+        const femaleSurvivalRate = 1 - (ageSpecificDeathRates[i] / 1000) * 0.8 / 10;
+        
+        currentMale[i] = currentMale[i] * maleSurvivalRate;
+        currentFemale[i] = currentFemale[i] * femaleSurvivalRate;
       }
     }
-    
-    projected.male = newMale;
-    projected.female = newFemale;
   }
   
-  return projected;
+  // Convert back to percentages
+  const totalFinalPop = currentMale.reduce((a, b) => a + b, 0) + currentFemale.reduce((a, b) => a + b, 0);
+  
+  if (totalFinalPop > 0) {
+    const malePercentages = currentMale.map(pop => (pop / totalFinalPop) * 100);
+    const femalePercentages = currentFemale.map(pop => (pop / totalFinalPop) * 100);
+    
+    return {
+      male: malePercentages,
+      female: femalePercentages
+    };
+  }
+  
+  return null;
 }
 
 function updatePyramidForYear(year) {

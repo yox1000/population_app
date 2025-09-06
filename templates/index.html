@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Population Pyramid Generator</title>
+  <title>Population Projection App</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
 <div class="container">
-  <h1>🏛️ Population Pyramid Generator</h1>
+  <h1>🏛️ Population Projection App</h1>
 
   <div class="presets">
     <strong>📊 Country Presets:</strong><br/>
@@ -29,9 +29,13 @@
       <img src="/static/qatar.png" alt="Qatar Flag" style="height: 1em; vertical-align: middle;"> Qatar
     </button>
 
-    <button class="btn" onclick="loadPreset('china')">🇨🇳 China</button>
+    <button class="btn" onclick="loadPreset('china')">
+      <img src="/static/china.png" alt="China Flag" style="height: 1em; vertical-align: middle;"> China
+    </button>
 
-    <button class="btn" onclick="loadPreset('india')">🇮🇳 India</button>
+    <button class="btn" onclick="loadPreset('india')">
+      <img src="/static/india.png" alt="India Flag" style="height: 1em; vertical-align: middle;"> India
+    </button>
 
     <button class="btn btn-clear" onclick="clearData()">
       🗑️ Clear
@@ -48,8 +52,8 @@
       <thead>
       <tr>
         <th>Age Group</th>
-        <th class="male-header">👨 Male %</th>
-        <th class="female-header">👩 Female %</th>
+        <th class="male-header"> Male %</th>
+        <th class="female-header"> Female %</th>
       </tr>
       </thead>
       <tbody id="age-table"></tbody>
@@ -104,20 +108,20 @@
     <div class="projection-inputs" style="margin-top: 20px; background: #f0f0f0; border-radius: 12px; padding: 15px;">
       <h3 style="margin-top: 0; color: #2c3e50; text-align: center;">📊 Growth Scenario Settings</h3>
       <div class="input-group">
-        <label>💰 GDP Growth Rate (% per year):</label>
+        <label>GDP Growth Rate (% per year):</label>
         <input type="number" id="gdpGrowth" step="0.1" value="2.0" min="-10" max="15">
 
-        <label>🏥 Life Expectancy Growth (% per year):</label>
+        <label>Life Expectancy Growth (% per year):</label>
         <input type="number" id="lifeGrowth" step="0.1" value="1.0" min="-5" max="10">
 
-        <label>🏙️ Urbanization Growth (% per year):</label>
+        <label>Urbanization Growth (% per year):</label>
         <input type="number" id="urbanGrowth" step="0.1" value="1.0" min="-5" max="10">
       </div>
     </div>
 
     <div class="projection-inputs" style="margin-top: 15px; background: #e8f4f8; border-radius: 12px; padding: 15px;">
       <div class="input-group">
-        <label>📅 Years to Project:</label>
+        <label>Years to Project:</label>
         <select id="yearsToProject">
           <option value="25">25 years (to 2050)</option>
           <option value="50">50 years (to 2075)</option>
