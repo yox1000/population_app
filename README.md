@@ -34,8 +34,11 @@ Data Storage: JSON (country demographics), csv (demographics_multi_year training
 How to Run:
 
 git clone <repo-url>
+
 cd project
+
 pip install -r requirements.txt
+
 flask run
 
 In your browser, go to:
