@@ -55,6 +55,8 @@ Use Clear to reset the app.
 
 🔮 Future Enhancements
 
+-- Will soon add interactive birth rate/death rate/migration rate area --- 
+
 Add more countries dynamically from datasets (UN, World Bank).
 
 Include more data for models to train on.
