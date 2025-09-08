@@ -5,9 +5,11 @@ let basePopulationData = null; // Store original population data for calculation
 
 function initializeTable() {
   const tbody = document.getElementById('age-table');
+  //make sure table starts empty before adding rows
   tbody.innerHTML = '';
   ageBrackets.forEach((bracket, i) => {
     const row = document.createElement('tr');
+    //we use the id such as male_${i} later for dynamic updating of pyramid
     row.innerHTML = `
       <td><strong>${bracket}</strong></td>
       <td><input type="number" id="male_${i}" step="0.1" min="0" max="100"></td>
@@ -17,7 +19,11 @@ function initializeTable() {
   });
 }
 
+// name -> country you want to load such as "india", "china", or "italy"
 function loadPreset(name) {
+  //fetch the data from the backend (app.py)
+  // response.json() parses the server's JSON response into a JS object,
+  // similar to how Flask's jsonify() converts a Python dict into JSON for the client
   fetch(`/get-country-data/${name}`)
     .then(response => response.json())
     .then(data => {
@@ -26,13 +32,22 @@ function loadPreset(name) {
         return;
       }
 
+      //by now, data contains all the country’s info: population, male/female age distribution, birth/death/migration rates
+
+      //shows population in the page visually
       document.getElementById('current-population').textContent = data.population.toLocaleString();
+      //stores raw number for later calculations when we do projections
       document.getElementById('current-population').dataset.value = data.population;
 
       // Auto-fill demographic rates
-      document.getElementById("birthRate").value = data.birth_rate ?? "20.0";
-      document.getElementById("deathRate").value = data.death_rate ?? "10.0";
-      document.getElementById("migrationRate").value = data.migration_rate ?? "0.0";
+      const birthInput = document.getElementById("birthRate");
+      birthInput.value = data.birth_rate ?? birthInput.value;
+
+      const deathInput = document.getElementById("deathRate");
+      deathInput.value = data.death_rate ?? deathInput.value;
+
+      const migrationInput = document.getElementById("migrationRate");
+      migrationInput.value = data.migration_rate ?? migrationInput.value;
 
       basePopulationData = {
         male: [...data.male_pyramid_data],
