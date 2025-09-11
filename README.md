@@ -55,6 +55,8 @@ Use Clear to reset the app.
 
 🔮 Future Enhancements
 
+--will fix confusion between birth and fertility rates in the csv file--
+
 -- Will soon add interactive birth rate/death rate/migration rate area --- 
 
 Add more countries dynamically from datasets (UN, World Bank).
@@ -71,3 +73,4 @@ Export charts as PNG/PDF.
 📝 License
 
 MIT License – free to use, modify, and share.
+-
